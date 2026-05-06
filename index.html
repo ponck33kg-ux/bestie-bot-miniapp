@@ -409,17 +409,15 @@
     });
   });
 
-  function startDialog() {
+ function startDialog() {
     if (!selected) return;
     const key = selected.dataset.key;
     const name = selected.dataset.name;
-    alert('Нажата кнопка! key=' + key);
-    try {
+    showToast(`Открываю чат с ${name}... 💬`);
+    setTimeout(() => {
         window.Telegram.WebApp.sendData(JSON.stringify({ character: key }));
-        alert('sendData отправлен!');
-    } catch(e) {
-        alert('ОШИБКА: ' + e.message);
-    }
+    }, 500);
+}
 }
   function showToast(msg) {
     const t = document.getElementById('toast');
