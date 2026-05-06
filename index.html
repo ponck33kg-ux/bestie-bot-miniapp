@@ -381,49 +381,43 @@
 <div class="toast" id="toast"></div>
 
 <script>
+  window.Telegram.WebApp.ready();
 
   let selected = null;
   let lastClickTime = 0;
 
-  function selectChar(card) {
-    const now = Date.now();
-    if (selected === card && now - lastClickTime < 400) {
-      deselectChar(card);
-      lastClickTime = 0;
-      return;
-    }
-    lastClickTime = now;
+  document.querySelectorAll('.char-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const now = Date.now();
+      if (selected === card && now - lastClickTime < 400) {
+        card.classList.remove('selected');
+        selected = null;
+        lastClickTime = 0;
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('startBtn').textContent = 'Начать диалог с подругой';
+        return;
+      }
+      lastClickTime = now;
+      document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      selected = card;
+      const name = card.dataset.name;
+      const nameWith = {'Ника':'Никой','Вера':'Верой','Лола':'Лолой','Диана':'Дианой'}[name] || name;
+      document.getElementById('startBtn').disabled = false;
+      document.getElementById('startBtn').textContent = `Начать диалог с ${nameWith}`;
+      showToast(`Выбрана ${name} ✓`);
+    });
+  });
 
-    document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
-    card.classList.add('selected');
-    selected = card;
-
-    const name = card.dataset.name;
-    const nameWith = { 'Ника': 'Никой', 'Вера': 'Верой', 'Лола': 'Лолой', 'Диана': 'Дианой' }[name] || name;
-    document.getElementById('startBtn').disabled = false;
-    document.getElementById('startBtn').textContent = `Начать диалог с ${nameWith}`;
-
-    showToast(`Выбрана ${name} ✓`);
-  }
-
-  function deselectChar(card) {
-    card.classList.remove('selected');
-    selected = null;
-    document.getElementById('startBtn').disabled = true;
-    document.getElementById('startBtn').textContent = 'Начать диалог с подругой';
-  }
-
- Function startDialog() {
+  function startDialog() {
     if (!selected) return;
-    const name = selected.dataset.name;
     const key = selected.dataset.key;
+    const name = selected.dataset.name;
     showToast(`Открываю чат с ${name}... 💬`);
     setTimeout(() => {
       window.Telegram.WebApp.sendData(JSON.stringify({ character: key }));
     }, 500);
   }
-
-  window.Telegram.WebApp.ready();
 
   function showToast(msg) {
     const t = document.getElementById('toast');
@@ -431,7 +425,6 @@
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2000);
   }
-
 </script>
 </body>
 </html>
