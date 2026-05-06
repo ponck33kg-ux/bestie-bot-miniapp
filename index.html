@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Bestie Bot</title>
+ <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -412,16 +413,17 @@
     document.getElementById('startBtn').textContent = 'Начать диалог с подругой';
   }
 
-  function startDialog() {
+ unction startDialog() {
     if (!selected) return;
     const name = selected.dataset.name;
     const key = selected.dataset.key;
     showToast(`Открываю чат с ${name}... 💬`);
     setTimeout(() => {
-      // tg.sendData(JSON.stringify({ action: 'select_character', character: key }))
-      console.log('Selected:', key);
+      window.Telegram.WebApp.sendData(JSON.stringify({ character: key }));
     }, 500);
   }
+
+  window.Telegram.WebApp.ready();
 
   function showToast(msg) {
     const t = document.getElementById('toast');
