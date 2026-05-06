@@ -418,6 +418,14 @@
         window.Telegram.WebApp.sendData(JSON.stringify({ character: key }));
     }, 500);
 }
+ alert('Нажата кнопка! key=' + key);
+    try {
+        window.Telegram.WebApp.sendData(JSON.stringify({ character: key }));
+        alert('sendData отправлен!');
+    } catch(e) {
+        alert('ОШИБКА: ' + e.message);
+    }
+}
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
