@@ -373,9 +373,9 @@
 </div>
 
 <div class="start-btn-wrap">
-  <button class="start-btn" id="startBtn" disabled onclick="startDialog()">
-    Начать диалог с подругой
-  </button>
+  <button class="start-btn" id="startBtn" onclick="startDialog()">
+  Начать диалог с подругой
+</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -408,7 +408,10 @@
   }
 
   function startDialog() {
-    if (!selected) return;
+    if (!selected) {
+    showToast('Выбери подругу для разговора 💕');
+    return;
+     }
     const key = selected.dataset.key;
     const name = selected.dataset.name;
     showToast(`Открываю чат с ${name}... 💬`);
