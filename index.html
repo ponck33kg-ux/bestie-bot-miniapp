@@ -426,16 +426,6 @@
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2000);
   }
-const urlParams = new URLSearchParams(window.location.search);
-const autoChar = urlParams.get('char');
-if (autoChar) {
-  const autoCard = document.querySelector(`.char-card[data-key="${autoChar}"]`);
-  if (autoCard) {
-    setTimeout(() => {
-      window.Telegram.WebApp.sendData(JSON.stringify({ character: autoChar }));
-    }, 300);
-  }
- }
 </script>
 </body>
 </html>
