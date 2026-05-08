@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Пополнение Stars</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    background: #1a1025;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 100px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  .bg-glow {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 350px;
+    background: radial-gradient(ellipse 80% 200px at 50% 0%, rgba(155,79,160,0.5) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 390px;
+    padding: 0 16px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    align-items: center;
+    padding: 16px 0 8px;
+    position: relative;
+  }
+  .back-btn {
+    width: 40px;
+    height: 40px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    font-size: 18px;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+  .back-btn:active { background: rgba(255,255,255,0.2); }
+
+  .header-title {
+    flex: 1;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: white;
+  }
+  .header-title span {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .header-spacer { width: 40px; }
+
+  /* STAR ICON */
+  .star-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0 4px;
+  }
+  .star-emoji {
+    font-size: 64px;
+    filter: drop-shadow(0 0 20px rgba(255, 200, 0, 0.6));
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  /* BALANCE */
+  .balance-section {
+    text-align: center;
+    margin: 8px 0 12px;
+  }
+  .balance-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 4px;
+  }
+  .balance-value {
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+  }
+  .balance-value span {
+    font-size: 48px;
+    font-weight: 900;
+    color: white;
+    -webkit-text-fill-color: white;
+    display: block;
+    line-height: 1.1;
+  }
+
+  /* FREE MESSAGES BADGE */
+  .free-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 6px 14px;
+    margin: 4px 0 16px;
+  }
+  .free-dot {
+    width: 7px;
+    height: 7px;
+    background: #4CAF50;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 6px rgba(76,175,80,0.8);
+  }
+  .free-dot.red {
+    background: #f44336;
+    box-shadow: 0 0 6px rgba(244,67,54,0.8);
+  }
+  .free-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.85);
+  }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  /* PACKAGES GRID */
+  .packages-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .package-card {
+    background: rgba(255,255,255,0.07);
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 18px;
+    padding: 16px 12px 12px;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.2s, transform 0.15s, background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .package-card:active { transform: scale(0.97); }
+
+  .package-card.selected {
+    border-color: #FD4894;
+    background: linear-gradient(135deg, rgba(255,254,207,0.08), rgba(253,72,148,0.15));
+    background-size: 300% 300%;
+    animation: shimmer 3s ease infinite, card-glow 2s ease-in-out infinite;
+    box-shadow: 0 0 0 1px rgba(253,72,148,0.4), 0 8px 24px rgba(253,72,148,0.3);
+    overflow: hidden;
+  }
+  @keyframes card-glow {
+    0%, 100% { box-shadow: 0 0 0 1px rgba(253,72,148,0.4), 0 8px 24px rgba(253,72,148,0.3); }
+    50% { box-shadow: 0 0 0 1px rgba(255,254,207,0.6), 0 8px 32px rgba(253,72,148,0.5); }
+  }
+  .package-card.selected::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -60%;
+    width: 40%;
+    height: 200%;
+    background: rgba(255,255,255,0.15);
+    transform: skewX(-20deg);
+    animation: sweep 3s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .check-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, #E8619A, #c8417a);
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 13px;
+    font-weight: 900;
+    box-shadow: 0 2px 8px rgba(232,97,154,0.5);
+    z-index: 2;
+  }
+  .package-card.selected .check-badge { display: flex; }
+
+  .package-stars-count {
+    font-size: 42px;
+    font-weight: 900;
+    color: white;
+    line-height: 1;
+  }
+  .package-stars-label {
+    font-size: 9px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .package-msgs {
+    font-size: 10px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 2px;
+  }
+  .package-price {
+    margin-top: 8px;
+    background: linear-gradient(135deg, #E8619A, #c8417a);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 14px;
+    font-weight: 800;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* BOTTOM BUTTON */
+  .bottom-wrap {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 390px;
+    padding: 12px 16px 24px;
+    background: linear-gradient(to top, #1a1025 60%, transparent);
+    z-index: 100;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes glow-pulse {
+    0%, 100% { box-shadow: 0 6px 16px rgba(253,72,148,0.35), 0 0 20px rgba(255,254,207,0.08); }
+    50% { box-shadow: 0 6px 22px rgba(253,72,148,0.5), 0 0 30px rgba(255,254,207,0.15); }
+  }
+
+  .pay-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #FFFECF, #FD4894, #FFFECF, #FD4894);
+    background-size: 300% 300%;
+    border: none;
+    border-radius: 14px;
+    color: white;
+    font-size: 17px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    -webkit-text-stroke: 0.4px rgba(0,0,0,0.6);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    animation: shimmer 5s ease infinite, glow-pulse 3s ease-in-out infinite;
+    transition: transform 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .pay-btn::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -60%;
+    width: 40%;
+    height: 200%;
+    background: rgba(255,255,255,0.12);
+    transform: skewX(-20deg);
+    animation: sweep 3s ease-in-out infinite;
+  }
+  @keyframes sweep {
+    0% { left: -60%; opacity: 0; }
+    30% { opacity: 1; }
+    60% { left: 120%; opacity: 0; }
+    100% { left: 120%; opacity: 0; }
+  }
+  .pay-btn:active { transform: scale(0.97); }
+  .pay-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+    box-shadow: none;
+  }
+
+  .disclaimer {
+    text-align: center;
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    margin-top: 8px;
+    line-height: 1.4;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: rgba(30,27,46,0.95);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 700;
+    z-index: 999;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+
+<div class="page">
+
+  <div class="header">
+    <div class="back-btn" onclick="goBack()">‹</div>
+    <div class="header-title">Пополнение <span>STARS</span></div>
+    <div class="header-spacer"></div>
+  </div>
+
+  <div class="star-wrap">
+    <div class="star-emoji">⭐</div>
+  </div>
+
+  <div class="balance-section">
+    <div class="balance-label">Твой баланс</div>
+    <div class="balance-value"><span id="balanceVal">500</span> STARS</div>
+  </div>
+
+  <div style="display:flex; justify-content:center;">
+    <div class="free-badge" id="freeBadge">
+      <div class="free-dot" id="freeDot"></div>
+      <div class="free-text" id="freeText">Осталось 3 бесплатных сообщения</div>
+    </div>
+  </div>
+
+  <div class="section-title">Выбери пакет</div>
+
+  <div class="packages-grid">
+
+    <div class="package-card" data-stars="30" data-msgs="10" onclick="selectPackage(this)">
+      <div class="check-badge">✓</div>
+      <div class="package-stars-count">30</div>
+      <div class="package-stars-label">Stars</div>
+      <div class="package-msgs">~ 10 сообщений</div>
+      <div class="package-price">30 ⭐</div>
+    </div>
+
+    <div class="package-card" data-stars="140" data-msgs="50" onclick="selectPackage(this)">
+      <div class="check-badge">✓</div>
+      <div class="package-stars-count">140</div>
+      <div class="package-stars-label">Stars</div>
+      <div class="package-msgs">~ 50 сообщений</div>
+      <div class="package-price">140 ⭐</div>
+    </div>
+
+    <div class="package-card" data-stars="250" data-msgs="100" onclick="selectPackage(this)">
+      <div class="check-badge">✓</div>
+      <div class="package-stars-count">250</div>
+      <div class="package-stars-label">Stars</div>
+      <div class="package-msgs">~ 100 сообщений</div>
+      <div class="package-price">250 ⭐</div>
+    </div>
+
+    <div class="package-card" data-stars="550" data-msgs="250" onclick="selectPackage(this)">
+      <div class="check-badge">✓</div>
+      <div class="package-stars-count">550</div>
+      <div class="package-stars-label">Stars</div>
+      <div class="package-msgs">~ 250 сообщений</div>
+      <div class="package-price">550 ⭐</div>
+    </div>
+
+  </div>
+
+  <div style="height: 90px;"></div>
+</div>
+
+<div class="bottom-wrap">
+  <button class="pay-btn" id="payBtn" onclick="handlePay()">
+    Пополнить баланс
+  </button>
+  <div class="disclaimer">
+    Оплата производится через Telegram Stars.<br>
+    Stars не возвращаются после покупки!
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const tg = window.Telegram?.WebApp;
+  if (tg) tg.ready();
+
+  let selectedCard = null;
+
+  // Параметры из URL (передаём баланс и бесплатные сообщения)
+  const params = new URLSearchParams(window.location.search);
+  const balance = parseInt(params.get('balance') || '0');
+  const freeLeft = parseInt(params.get('free_left') || '3');
+  const freeResetIn = params.get('free_reset_in') || null; // "2ч 30м"
+
+  document.getElementById('balanceVal').textContent = balance;
+
+  // Счётчик бесплатных сообщений
+  const freeDot = document.getElementById('freeDot');
+  const freeText = document.getElementById('freeText');
+
+  if (freeLeft > 0) {
+    freeDot.classList.remove('red');
+    freeText.textContent = `Осталось ${freeLeft} бесплатных ${declMsg(freeLeft)}`;
+  } else {
+    freeDot.classList.add('red');
+    if (freeResetIn) {
+      freeText.textContent = `Бесплатные кончились 😢 Ещё 3 через ${freeResetIn}`;
+    } else {
+      freeText.textContent = `У тебя кончились бесплатные сообщения 😢`;
+    }
+  }
+
+  function declMsg(n) {
+    if (n === 1) return 'сообщение';
+    if (n >= 2 && n <= 4) return 'сообщения';
+    return 'сообщений';
+  }
+
+  function selectPackage(card) {
+    if (selectedCard) selectedCard.classList.remove('selected');
+    selectedCard = card;
+    card.classList.add('selected');
+    const stars = card.dataset.stars;
+    document.getElementById('payBtn').textContent = `Пополнить на ${stars} ⭐`;
+  }
+
+  function handlePay() {
+    if (!selectedCard) {
+      showToast('Выберите количество ⭐');
+      return;
+    }
+    const stars = selectedCard.dataset.stars;
+    showToast(`Переход к оплате ${stars} ⭐...`);
+    // TODO: подключить Telegram Stars invoice
+  }
+
+  function goBack() {
+    if (tg) tg.close();
+    else window.history.back();
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+</script>
+</body>
+</html>
