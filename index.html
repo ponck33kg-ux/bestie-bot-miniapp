@@ -352,7 +352,7 @@
   </div>
 
   <div class="bottom-links">
-    <button class="profile-btn">Личный Профиль</button>
+    <button class="profile-btn" onclick="openProfile()">Личный Профиль</button>
     <div class="links-row">
       <div class="link-item">
         <span class="link-icon">❓</span>
@@ -381,7 +381,8 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  window.Telegram.WebApp.ready();
+  const tg = window.Telegram?.WebApp;
+  if (tg) tg.ready();
 
   let selected = null;
   let lastClickTime = 0;
@@ -392,7 +393,6 @@
       card.classList.remove('selected');
       selected = null;
       lastClickTime = 0;
-      document.getElementById('startBtn').disabled = true;
       document.getElementById('startBtn').textContent = 'Начать диалог с подругой';
       return;
     }
@@ -402,22 +402,28 @@
     selected = card;
     const name = card.dataset.name;
     const nameWith = {'Ника':'Никой','Вера':'Верой','Лола':'Лолой','Диана':'Дианой'}[name] || name;
-    document.getElementById('startBtn').disabled = false;
     document.getElementById('startBtn').textContent = `Начать диалог с ${nameWith}`;
     showToast(`Выбрана ${name} ✓`);
   }
 
   function startDialog() {
     if (!selected) {
-    showToast('Выбери подругу для разговора 💕');
-    return;
-     }
+      showToast('Выбери подругу для разговора 💕');
+      return;
+    }
     const key = selected.dataset.key;
     const name = selected.dataset.name;
     showToast(`Открываю чат с ${name}... 💬`);
     setTimeout(() => {
-      window.Telegram.WebApp.sendData(JSON.stringify({ character: key }));
+      if (tg) tg.sendData(JSON.stringify({ character: key }));
     }, 500);
+  }
+
+  function openProfile() {
+    showToast('Открываю профиль...');
+    setTimeout(() => {
+      if (tg) tg.sendData(JSON.stringify({ action: 'profile' }));
+    }, 300);
   }
 
   function showToast(msg) {
