@@ -407,17 +407,17 @@
   }
 
   function startDialog() {
-    if (!selected) {
-      showToast('Выбери подругу для разговора 💕');
-      return;
-    }
-    const key = selected.dataset.key;
-    const name = selected.dataset.name;
-    showToast(`Открываю чат с ${name}... 💬`);
-    setTimeout(() => {
-      if (tg) tg.sendData(JSON.stringify({ character: key }));
-    }, 500);
+  if (!selected) {
+    showToast('Выбери подругу для разговора 💕');
+    return;
   }
+  const key = selected.dataset.key;
+  const name = selected.dataset.name;
+  showToast(`Открываю чат с ${name}... 💬`);
+  setTimeout(() => {
+    if (tg) tg.sendData(JSON.stringify({ character: key }));
+  }, 500);
+}
 
   function openProfile() {
     showToast('Открываю профиль...');
