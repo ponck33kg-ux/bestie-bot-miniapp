@@ -373,7 +373,7 @@
 </div>
 
 <div class="start-btn-wrap">
-  <button class="start-btn" id="startBtn" onclick="startDialog()">
+  <button class="start-btn" id="startBtn" onclick="()">
   Начать диалог с подругой
 </button>
 </div>
@@ -406,7 +406,7 @@
     showToast(`Выбрана ${name} ✓`);
   }
 
-  function startDialog() {
+  async function startDialog() {
   if (!selected) {
     showToast('Выбери подругу для разговора 💕');
     return;
@@ -414,17 +414,34 @@
   const key = selected.dataset.key;
   const name = selected.dataset.name;
   showToast(`Открываю чат с ${name}... 💬`);
-  setTimeout(() => {
-    if (tg) tg.sendData(JSON.stringify({ character: key }));
-  }, 500);
+
+  const queryId = tg.initDataUnsafe?.query_id;
+  if (!queryId) {
+    showToast('Ошибка: нет query_id');
+    return;
+  }
+
+  await fetch('https://worker-production-7cb04.up.railway.app/answer_webapp_query', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query_id: queryId, character: key })
+  });
+
+  tg.close();
 }
 
-  function openProfile() {
-    showToast('Открываю профиль...');
-    setTimeout(() => {
-      if (tg) tg.sendData(JSON.stringify({ action: 'profile' }));
-    }, 300);
-  }
+async function openProfile() {
+  const queryId = tg.initDataUnsafe?.query_id;
+  if (!queryId) return;
+
+  await fetch('https://worker-production-7cb04.up.railway.app/answer_webapp_query', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query_id: queryId, action: 'profile' })
+  });
+
+  tg.close();
+}
 
   function showToast(msg) {
     const t = document.getElementById('toast');
