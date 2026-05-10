@@ -406,39 +406,52 @@
     showToast(`Выбрана ${name} ✓`);
   }
 
- async function startDialog() {
+async function startDialog() {
   if (!selected) {
     showToast('Выбери подругу для разговора 💕');
     return;
   }
   const key = selected.dataset.key;
-  const queryId = tg.initDataUnsafe?.query_id;
-  
+  const name = selected.dataset.name;
+  showToast(`Открываю чат с ${name}... 💬`);
+
   try {
     const res = await fetch('https://worker-production-7cb04.up.railway.app/answer_webapp_query', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query_id: queryId, character: key })
+      body: JSON.stringify({ 
+        character: key,
+        init_data: tg.initData
+      })
     });
     const data = await res.json();
     showToast(JSON.stringify(data));
-    await new Promise(r => setTimeout(r, 3000));
+    await new Promise(r => setTimeout(r, 2000));
   } catch(e) {
     showToast('Ошибка: ' + e.message);
-    await new Promise(r => setTimeout(r, 3000));
+    await new Promise(r => setTimeout(r, 2000));
   }
 
   tg.close();
 }
-async function openProfile() {
-  const queryId = tg.initDataUnsafe?.query_id;
-  if (!queryId) return;
 
-  await fetch('https://worker-production-7cb04.up.railway.app/answer_webapp_query', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query_id: queryId, action: 'profile' })
-  });
+async function openProfile() {
+  try {
+    const res = await fetch('https://worker-production-7cb04.up.railway.app/answer_webapp_query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        action: 'profile',
+        init_data: tg.initData
+      })
+    });
+    const data = await res.json();
+    showToast(JSON.stringify(data));
+    await new Promise(r => setTimeout(r, 2000));
+  } catch(e) {
+    showToast('Ошибка: ' + e.message);
+    await new Promise(r => setTimeout(r, 2000));
+  }
 
   tg.close();
 }
