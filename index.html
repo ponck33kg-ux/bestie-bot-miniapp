@@ -406,55 +406,45 @@
     showToast(`Выбрана ${name} ✓`);
   }
 
-async function startDialog() {
-  if (!selected) {
-    showToast('Выбери подругу для разговора 💕');
-    return;
-  }
-  const key = selected.dataset.key;
-  const name = selected.dataset.name;
-  showToast(`Открываю чат с ${name}... 💬`);
+  async function startDialog() {
+    if (!selected) {
+      showToast('Выбери подругу для разговора 💕');
+      return;
+    }
+    const key = selected.dataset.key;
 
-  try {
-    const res = await fetch('https://worker-production-7cb04.up.railway.app/answer_webapp_query', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        character: key,
-        init_data: tg.initData
-      })
-    });
-    const data = await res.json();
-    showToast(JSON.stringify(data));
-    await new Promise(r => setTimeout(r, 2000));
-  } catch(e) {
-    showToast('Ошибка: ' + e.message);
-    await new Promise(r => setTimeout(r, 2000));
+    try {
+      await fetch('https://worker-production-7cb04.up.railway.app/answer_webapp_query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          character: key,
+          init_data: tg.initData
+        })
+      });
+    } catch(e) {
+      console.error(e);
+    }
+
+    tg.close();
   }
 
-  tg.close();
-}
+  async function openProfile() {
+    try {
+      await fetch('https://worker-production-7cb04.up.railway.app/answer_webapp_query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'profile',
+          init_data: tg.initData
+        })
+      });
+    } catch(e) {
+      console.error(e);
+    }
 
-async function openProfile() {
-  try {
-    const res = await fetch('https://worker-production-7cb04.up.railway.app/answer_webapp_query', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        action: 'profile',
-        init_data: tg.initData
-      })
-    });
-    const data = await res.json();
-    showToast(JSON.stringify(data));
-    await new Promise(r => setTimeout(r, 2000));
-  } catch(e) {
-    showToast('Ошибка: ' + e.message);
-    await new Promise(r => setTimeout(r, 2000));
+    tg.close();
   }
-
-  tg.close();
-}
 
   function showToast(msg) {
     const t = document.getElementById('toast');
