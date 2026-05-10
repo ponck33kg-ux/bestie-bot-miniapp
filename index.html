@@ -412,18 +412,19 @@
     return;
   }
   const key = selected.dataset.key;
-  const name = selected.dataset.name;
-  
   const queryId = tg.initDataUnsafe?.query_id;
-  showToast(`query_id: ${queryId || 'ПУСТО'}`);
   
-  if (!queryId) return;
-
-  await fetch('https://worker-production-7cb04.up.railway.app/answer_webapp_query', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query_id: queryId, character: key })
-  });
+  try {
+    const res = await fetch('https://worker-production-7cb04.up.railway.app/answer_webapp_query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query_id: queryId, character: key })
+    });
+    const data = await res.json();
+    showToast(JSON.stringify(data));
+  } catch(e) {
+    showToast('Ошибка: ' + e.message);
+  }
 
   tg.close();
 }
