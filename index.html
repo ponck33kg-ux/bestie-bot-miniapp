@@ -422,13 +422,14 @@
     });
     const data = await res.json();
     showToast(JSON.stringify(data));
+    await new Promise(r => setTimeout(r, 3000));
   } catch(e) {
     showToast('Ошибка: ' + e.message);
+    await new Promise(r => setTimeout(r, 3000));
   }
 
   tg.close();
 }
-
 async function openProfile() {
   const queryId = tg.initDataUnsafe?.query_id;
   if (!queryId) return;
