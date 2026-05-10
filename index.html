@@ -406,20 +406,18 @@
     showToast(`Выбрана ${name} ✓`);
   }
 
-  async function startDialog() {
+ async function startDialog() {
   if (!selected) {
     showToast('Выбери подругу для разговора 💕');
     return;
   }
   const key = selected.dataset.key;
   const name = selected.dataset.name;
-  showToast(`Открываю чат с ${name}... 💬`);
-
+  
   const queryId = tg.initDataUnsafe?.query_id;
-  if (!queryId) {
-    showToast('Ошибка: нет query_id');
-    return;
-  }
+  showToast(`query_id: ${queryId || 'ПУСТО'}`);
+  
+  if (!queryId) return;
 
   await fetch('https://worker-production-7cb04.up.railway.app/answer_webapp_query', {
     method: 'POST',
