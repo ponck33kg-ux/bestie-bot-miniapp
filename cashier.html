@@ -37,7 +37,6 @@
     z-index: 1;
   }
 
-  /* HEADER */
   .header {
     display: flex;
     align-items: center;
@@ -78,7 +77,6 @@
   }
   .header-spacer { width: 40px; }
 
-  /* STAR ICON */
   .star-wrap {
     display: flex;
     flex-direction: column;
@@ -95,7 +93,6 @@
     50% { transform: translateY(-8px); }
   }
 
-  /* BALANCE */
   .balance-section {
     text-align: center;
     margin: 8px 0 12px;
@@ -111,21 +108,19 @@
   .balance-value {
     font-size: 22px;
     font-weight: 700;
-    background: linear-gradient(135deg, #FFD700, #FFA500);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: rgba(255,255,255,0.7);
     line-height: 1;
   }
   .balance-value span {
     font-size: 48px;
     font-weight: 900;
-    color: white;
-    -webkit-text-fill-color: white;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     display: block;
     line-height: 1.1;
   }
 
-  /* FREE MESSAGES BADGE */
   .free-badge {
     display: inline-flex;
     align-items: center;
@@ -154,7 +149,6 @@
     color: rgba(255,255,255,0.85);
   }
 
-  /* SECTION TITLE */
   .section-title {
     font-size: 11px;
     font-weight: 800;
@@ -165,7 +159,6 @@
     margin-bottom: 12px;
   }
 
-  /* PACKAGES GRID */
   .packages-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -264,7 +257,6 @@
     gap: 4px;
   }
 
-  /* BOTTOM BUTTON */
   .bottom-wrap {
     position: fixed;
     bottom: 0;
@@ -338,7 +330,6 @@
     line-height: 1.4;
   }
 
-  /* TOAST */
   .toast {
     position: fixed;
     top: 20px;
@@ -376,13 +367,16 @@
 
   <div class="balance-section">
     <div class="balance-label">Твой баланс</div>
-    <div class="balance-value"><span id="balanceVal">500</span> STARS</div>
+    <div class="balance-value">
+      <span id="balanceVal">0</span>
+      <span id="balanceWord" style="font-size:22px; font-weight:700; -webkit-text-fill-color: rgba(255,255,255,0.7);">сообщений</span>
+    </div>
   </div>
 
   <div style="display:flex; justify-content:center;">
     <div class="free-badge" id="freeBadge">
       <div class="free-dot" id="freeDot"></div>
-      <div class="free-text" id="freeText">Осталось 3 бесплатных сообщения</div>
+      <div class="free-text" id="freeText">Загрузка...</div>
     </div>
   </div>
 
@@ -390,35 +384,35 @@
 
   <div class="packages-grid">
 
-    <div class="package-card" data-stars="30" data-msgs="10" onclick="selectPackage(this)">
+    <div class="package-card" data-pack="pack_30" data-stars="30" data-msgs="10" onclick="selectPackage(this)">
       <div class="check-badge">✓</div>
       <div class="package-stars-count">30</div>
       <div class="package-stars-label">Stars</div>
-      <div class="package-msgs">~ 10 сообщений</div>
+      <div class="package-msgs">10 сообщений</div>
       <div class="package-price">30 ⭐</div>
     </div>
 
-    <div class="package-card" data-stars="140" data-msgs="50" onclick="selectPackage(this)">
+    <div class="package-card" data-pack="pack_140" data-stars="140" data-msgs="50" onclick="selectPackage(this)">
       <div class="check-badge">✓</div>
       <div class="package-stars-count">140</div>
       <div class="package-stars-label">Stars</div>
-      <div class="package-msgs">~ 50 сообщений</div>
+      <div class="package-msgs">50 сообщений</div>
       <div class="package-price">140 ⭐</div>
     </div>
 
-    <div class="package-card" data-stars="250" data-msgs="100" onclick="selectPackage(this)">
+    <div class="package-card" data-pack="pack_250" data-stars="250" data-msgs="100" onclick="selectPackage(this)">
       <div class="check-badge">✓</div>
       <div class="package-stars-count">250</div>
       <div class="package-stars-label">Stars</div>
-      <div class="package-msgs">~ 100 сообщений</div>
+      <div class="package-msgs">100 сообщений</div>
       <div class="package-price">250 ⭐</div>
     </div>
 
-    <div class="package-card" data-stars="550" data-msgs="250" onclick="selectPackage(this)">
+    <div class="package-card" data-pack="pack_550" data-stars="550" data-msgs="250" onclick="selectPackage(this)">
       <div class="check-badge">✓</div>
       <div class="package-stars-count">550</div>
       <div class="package-stars-label">Stars</div>
-      <div class="package-msgs">~ 250 сообщений</div>
+      <div class="package-msgs">250 сообщений</div>
       <div class="package-price">550 ⭐</div>
     </div>
 
@@ -443,55 +437,107 @@
   const tg = window.Telegram?.WebApp;
   if (tg) tg.ready();
 
+  const SERVER = 'https://worker-production-7cb04.up.railway.app';
+
   let selectedCard = null;
+  let isPaying = false;
 
-  // Параметры из URL (передаём баланс и бесплатные сообщения)
-  const params = new URLSearchParams(window.location.search);
-  const balance = parseInt(params.get('balance') || '0');
-  const freeLeft = parseInt(params.get('free_left') || '3');
-  const freeResetIn = params.get('free_reset_in') || null; // "2ч 30м"
+  // ── Склонение ──────────────────────────────────────────────────────────────
 
-  document.getElementById('balanceVal').textContent = balance;
+  function pluralMessages(n) {
+    const mod10 = n % 10;
+    const mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return 'сообщение';
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return 'сообщения';
+    return 'сообщений';
+  }
 
-  // Счётчик бесплатных сообщений
-  const freeDot = document.getElementById('freeDot');
-  const freeText = document.getElementById('freeText');
+  // ── Загрузка баланса ───────────────────────────────────────────────────────
 
-  if (freeLeft > 0) {
-    freeDot.classList.remove('red');
-    freeText.textContent = `Осталось ${freeLeft} бесплатных ${declMsg(freeLeft)}`;
-  } else {
-    freeDot.classList.add('red');
-    if (freeResetIn) {
-      freeText.textContent = `Бесплатные кончились 😢 Ещё 3 через ${freeResetIn}`;
-    } else {
-      freeText.textContent = `У тебя кончились бесплатные сообщения 😢`;
+  async function loadBalance() {
+    try {
+      const initData = tg?.initData || '';
+      const res = await fetch(
+        `${SERVER}/user_info?init_data=${encodeURIComponent(initData)}`
+      );
+      const data = await res.json();
+
+      if (!data.ok) return;
+
+      const balance = data.messages_balance || 0;
+      const freeLeft = data.free_left ?? 3;
+
+      document.getElementById('balanceVal').textContent = balance;
+      document.getElementById('balanceWord').textContent = pluralMessages(balance);
+
+      const freeDot = document.getElementById('freeDot');
+      const freeText = document.getElementById('freeText');
+
+      if (freeLeft > 0) {
+        freeDot.classList.remove('red');
+        freeText.textContent = `Осталось ${freeLeft} бесплатных ${pluralMessages(freeLeft)}`;
+      } else {
+        freeDot.classList.add('red');
+        freeText.textContent = 'Бесплатные сообщения на сегодня закончились';
+      }
+
+    } catch (e) {
+      console.error('Ошибка загрузки баланса:', e);
+      document.getElementById('freeText').textContent = '3 сообщения в день бесплатно!';
     }
   }
 
-  function declMsg(n) {
-    if (n === 1) return 'сообщение';
-    if (n >= 2 && n <= 4) return 'сообщения';
-    return 'сообщений';
-  }
+  loadBalance();
+
+  // ── Выбор пакета ───────────────────────────────────────────────────────────
 
   function selectPackage(card) {
     if (selectedCard) selectedCard.classList.remove('selected');
     selectedCard = card;
     card.classList.add('selected');
     const stars = card.dataset.stars;
-    document.getElementById('payBtn').textContent = `Пополнить на ${stars} ⭐`;
+    const msgs = card.dataset.msgs;
+    document.getElementById('payBtn').textContent =
+      `Пополнить на ${stars} ⭐ (${msgs} ${pluralMessages(parseInt(msgs))})`;
   }
 
-  function handlePay() {
+  // ── Оплата ─────────────────────────────────────────────────────────────────
+
+  async function handlePay() {
     if (!selectedCard) {
-      showToast('Выберите количество ⭐');
+      showToast('Выбери пакет ⭐');
       return;
     }
-    const stars = selectedCard.dataset.stars;
-    showToast(`Переход к оплате ${stars} ⭐...`);
-    // TODO: подключить Telegram Stars invoice
+
+    if (isPaying) return;
+    isPaying = true;
+
+    const packKey = selectedCard.dataset.pack;
+    const btn = document.getElementById('payBtn');
+    btn.disabled = true;
+
+    try {
+      await fetch(`${SERVER}/create_invoice`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pack_key: packKey,
+          init_data: tg?.initData || ''
+        })
+      });
+
+      showToast('Счёт отправлен в чат — подтверди оплату ✨');
+      setTimeout(() => tg?.close(), 1500);
+
+    } catch (e) {
+      console.error(e);
+      showToast('Ошибка — попробуй ещё раз');
+      btn.disabled = false;
+      isPaying = false;
+    }
   }
+
+  // ── Утилиты ────────────────────────────────────────────────────────────────
 
   function goBack() {
     if (tg) tg.close();
