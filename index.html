@@ -301,7 +301,7 @@
     <div class="logo-sub">Бот Безусловной Поддержки</div>
   </div>
 
-  <div class="balance-row">Баланс: ⭐ <span id="balance">0</span></div>
+  <div class="balance-row">Баланс: ⭐ <span id="balance">0</span> <span id="balanceWord">сообщений</span></div>
 
   <div class="topup-row" onclick="window.location.href='cashier.html'">
     Пополнить ⭐
@@ -383,6 +383,32 @@
 <script>
   const tg = window.Telegram?.WebApp;
   if (tg) tg.ready();
+
+  const SERVER = 'https://worker-production-7cb04.up.railway.app';
+
+  function pluralMessages(n) {
+    const mod10 = n % 10;
+    const mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return 'сообщение';
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return 'сообщения';
+    return 'сообщений';
+  }
+
+  async function loadBalance() {
+    try {
+      const initData = tg?.initData || '';
+      const res = await fetch(`${SERVER}/user_info?init_data=${encodeURIComponent(initData)}`);
+      const data = await res.json();
+      if (!data.ok) return;
+      const balance = data.messages_balance || 0;
+      document.getElementById('balance').textContent = balance;
+      document.getElementById('balanceWord').textContent = pluralMessages(balance);
+    } catch(e) {
+      console.error('Ошибка загрузки баланса:', e);
+    }
+  }
+
+  loadBalance();
 
   let selected = null;
   let lastClickTime = 0;
